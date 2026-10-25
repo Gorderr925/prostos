@@ -8,8 +8,15 @@ if [ -n "${DISPLAY:-}" ] && command -v xhost >/dev/null 2>&1; then
 	xhost +si:localuser:root >/dev/null 2>&1 || true
 fi
 
-pkexec calamares
-rc=$?
+# В live-сессии у пользователя prost есть sudo без пароля — запускаем установщик
+# сразу от root. Если sudo недоступен, откатываемся на pkexec (polkit).
+if sudo -n true 2>/dev/null; then
+	sudo -n /usr/bin/calamares
+	rc=$?
+else
+	pkexec calamares
+	rc=$?
+fi
 
 if [ -n "${DISPLAY:-}" ] && command -v xhost >/dev/null 2>&1; then
 	xhost -si:localuser:root >/dev/null 2>&1 || true

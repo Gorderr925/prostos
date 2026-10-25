@@ -61,6 +61,7 @@ firmware-brcm80211
 firmware-amd-graphics
 firmware-sof-signed
 firmware-intel-sound
+firmware-misc-nonfree
 
 grub-pc-bin
 grub-efi-amd64-bin

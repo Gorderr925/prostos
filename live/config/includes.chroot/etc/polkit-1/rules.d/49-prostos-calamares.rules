@@ -1,0 +1,16 @@
+/* ProstOS: установщик запускается из live-сессии без запроса пароля.
+ * Это live-система на флешке, поэтому послабление ограничено пользователем prost
+ * и только программой установщика.
+ */
+polkit.addRule(function(action, subject) {
+    if (action.id !== "org.freedesktop.policykit.exec") {
+        return;
+    }
+    if (subject.user !== "prost") {
+        return;
+    }
+    var program = action.lookup("program") || "";
+    if (program === "/usr/bin/calamares" || program === "calamares") {
+        return polkit.Result.YES;
+    }
+});
