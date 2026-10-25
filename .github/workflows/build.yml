@@ -25,6 +25,8 @@ jobs:
           chmod +x live/config/hooks/normal/*.chroot
           chmod +x live/config/includes.chroot/usr/bin/*
           chmod +x live/config/includes.chroot/usr/share/applications/*.desktop || true
+          # Windows-переносы строк ломают apt и live-build: убираем CR у всех файлов проекта
+          find live -type f -exec sed -i 's/\r$//' {} +
 
       - name: Show configuration
         run: |
