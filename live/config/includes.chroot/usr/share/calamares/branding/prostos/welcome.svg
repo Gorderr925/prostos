@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b2419"/>
+      <stop offset="1" stop-color="#1f7a4a"/>
+    </linearGradient>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="320" rx="18" fill="url(#bg)"/>
+  <g transform="translate(56 92)">
+    <rect width="136" height="136" rx="32" fill="url(#logo)"/>
+    <rect x="39" y="27" width="20" height="82" rx="10" fill="#ffffff"/>
+    <path d="M59 27 h20 a23 23 0 0 1 0 45 h-20" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+  </g>
+  <text x="230" y="140" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="46" font-weight="700" fill="#ffffff">Добро пожаловать</text>
+  <text x="232" y="190" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="30" fill="#bbf7d0">в ProstOS 1.0</text>
+  <text x="232" y="240" font-family="DejaVu Sans, Noto Sans, sans-serif" font-size="20" fill="#86efac">Просто. Открыто. Твоё.</text>
+</svg>

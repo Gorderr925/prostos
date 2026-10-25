@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+export DEBIAN_FRONTEND=noninteractive
+
+# --- Locale ---
+sed -i -E 's/^# *ru_RU\.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen
+sed -i -E 's/^# *en_US\.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+locale-gen
+update-locale LANG=ru_RU.UTF-8 LANGUAGE=ru_RU:ru
+
+# --- Timezone ---
+ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+printf '%s\n' 'Europe/Moscow' > /etc/timezone
+
+# --- Keyboard ---
+cat > /etc/default/keyboard <<'EOF'
+XKBMODEL="pc105"
+XKBLAYOUT="ru,us"
+XKBVARIANT=""
+XKBOPTIONS="grp:alt_shift_toggle"
+BACKSPACE="guess"
+EOF
+
+# --- LightDM: autologin for the live session ---
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat > /etc/lightdm/lightdm.conf.d/50-prostos.conf <<'EOF'
+[Seat:*]
+autologin-user=prost
+autologin-user-timeout=0
+autologin-session=xfce
+greeter-session=lightdm-gtk-greeter
+user-session=xfce
+EOF
+
+# --- Services ---
+systemctl enable lightdm.service 2>/dev/null || true
+systemctl enable NetworkManager.service 2>/dev/null || true
+systemctl set-default graphical.target 2>/dev/null || true
+
+# --- Machine identity (regenerated at boot) ---
+rm -f /etc/machine-id /var/lib/dbus/machine-id
+touch /etc/machine-id
+
+# --- Permissions ---
+chmod 755 /usr/bin/prostos-wallpaper 2>/dev/null || true
+chmod 755 /usr/bin/prostos-install 2>/dev/null || true
+chmod 755 /usr/bin/prostos-desktop-icons 2>/dev/null || true
+chmod 644 /etc/xdg/autostart/prostos-wallpaper.desktop 2>/dev/null || true
+chmod 644 /etc/xdg/autostart/zz-prostos-desktop-icons.desktop 2>/dev/null || true
+chmod 644 /usr/share/applications/prostos-welcome.desktop 2>/dev/null || true
+chmod 644 /usr/share/applications/prostos-install.desktop 2>/dev/null || true
+
+# --- Desktop caches ---
+update-desktop-database /usr/share/applications 2>/dev/null || true
+gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+
+exit 0

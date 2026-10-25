@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Добро пожаловать в ProstOS
+Name[en]=Welcome to ProstOS
+Comment=Знакомство с системой и открытым кодом
+Comment[en]=Getting started with ProstOS and open source
+Exec=firefox-esr /usr/share/prostos/welcome.html
+Icon=prostos
+Terminal=false
+Categories=System;Documentation;
+Keywords=welcome;start;prostos;open;source;
+StartupNotify=true

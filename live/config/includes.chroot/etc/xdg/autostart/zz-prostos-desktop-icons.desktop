@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS Desktop Icons
+Comment=Place the installer and welcome launchers on the desktop
+Exec=/usr/bin/prostos-desktop-icons
+OnlyShowIn=XFCE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Initialization

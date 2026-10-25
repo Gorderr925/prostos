@@ -1,0 +1,29 @@
+#!/bin/sh
+# Put the ProstOS launchers on the user's desktop and mark them trusted for XFCE.
+set -u
+
+sleep 2
+
+desktop_dir="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+if [ -z "$desktop_dir" ] || [ "$desktop_dir" = "$HOME" ]; then
+	desktop_dir="$HOME/Desktop"
+fi
+mkdir -p "$desktop_dir" 2>/dev/null || exit 0
+
+for app in prostos-install prostos-welcome; do
+	src="/usr/share/applications/$app.desktop"
+	dst="$desktop_dir/$app.desktop"
+	[ -f "$src" ] || continue
+
+	cp -f "$src" "$dst" 2>/dev/null || continue
+	chmod 755 "$dst" 2>/dev/null || true
+
+	if command -v gio >/dev/null 2>&1; then
+		gio set --type=string "$dst" metadata::trusted true 2>/dev/null || true
+		sum="$(sha256sum "$dst" 2>/dev/null | cut -f1 -d' ')"
+		[ -n "$sum" ] && gio set --type=string "$dst" metadata::xfce-exe-checksum "$sum" 2>/dev/null || true
+		touch "$dst" 2>/dev/null || true
+	fi
+done
+
+exit 0

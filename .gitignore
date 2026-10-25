@@ -1,0 +1,17 @@
+live/binary
+live/chroot
+live/cache
+live/bootstrap
+live/config/binary
+live/config/chroot
+live/config/bootstrap
+live/config/common
+live/config/source
+live/.build
+live/*.iso
+live/*.contents
+live/*.files
+live/*.packages
+live/*.sha256sums
+live/*.zsync
+*.log

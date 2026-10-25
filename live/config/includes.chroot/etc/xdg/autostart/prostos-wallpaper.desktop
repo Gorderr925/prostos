@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS Wallpaper
+Comment=Apply the ProstOS wallpaper to all monitors
+Exec=/usr/bin/prostos-wallpaper
+OnlyShowIn=XFCE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

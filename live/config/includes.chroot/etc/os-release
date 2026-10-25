@@ -1,0 +1,12 @@
+PRETTY_NAME="ProstOS 1.0"
+NAME="ProstOS"
+VERSION_ID="1.0"
+VERSION="1.0 (Trixie)"
+VERSION_CODENAME=trixie
+ID=prostos
+ID_LIKE=debian
+ANSI_COLOR="1;32"
+HOME_URL="https://github.com/"
+SUPPORT_URL="https://github.com/"
+BUG_REPORT_URL="https://github.com/"
+LOGO=prostos

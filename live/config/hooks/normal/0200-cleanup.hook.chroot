@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
+find /var/log -type f -exec truncate -s 0 {} \; 2>/dev/null || true
+
+exit 0

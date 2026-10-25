@@ -1,0 +1,126 @@
+name: Build ProstOS ISO
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prostos-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare permissions
+        run: |
+          chmod +x live/auto/config
+          chmod +x live/config/hooks/normal/*.chroot
+          chmod +x live/config/includes.chroot/usr/bin/*
+          chmod +x live/config/includes.chroot/usr/share/applications/*.desktop || true
+
+      - name: Show configuration
+        run: |
+          echo "--- auto/config ---"
+          cat live/auto/config
+          echo "--- packages ---"
+          cat live/config/package-lists/prostos.list.chroot
+          echo "--- docker ---"
+          docker version --format '{{.Server.Version}}'
+
+      - name: Build ISO (Debian trixie container)
+        run: |
+          docker run --rm --privileged \
+            -v "$PWD:/build" \
+            -w /build \
+            -e DEBIAN_FRONTEND=noninteractive \
+            -e LC_ALL=C.UTF-8 \
+            debian:trixie \
+            bash -lc '
+              set -euo pipefail
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                live-build debootstrap cpio xorriso squashfs-tools dosfstools mtools \
+                grub-pc-bin grub-efi-amd64-bin isolinux syslinux-common syslinux-utils \
+                wget xz-utils rsync file bzip2 cryptsetup ca-certificates fakeroot bc \
+                apt-utils sudo
+              cd live
+              lb build 2>&1 | tee /build/build.log
+            '
+
+      - name: Checksums
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" live
+          ls -lh live/*.iso
+          ISO="$(ls live/*.iso | head -n1)"
+          sha256sum "$ISO" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          echo "ISO_BYTES=$(stat -c%s "$ISO")" >> "$GITHUB_ENV"
+          echo "ISO_NAME=$(basename "$ISO")" >> "$GITHUB_ENV"
+
+      - name: Split ISO if larger than 1.9 GB
+        run: |
+          if [ "$ISO_BYTES" -gt 1900000000 ]; then
+            split -b 1800M -d "live/$ISO_NAME" prostos.iso.part
+            mkdir -p iso-backup && mv "live/$ISO_NAME" iso-backup/
+            ls -lh prostos.iso.part*
+            {
+              echo "ISO разделён на части (файл больше 2 ГБ)."
+              echo
+              echo "Windows (cmd), в папке со всеми частями:"
+              echo "  copy /b prostos.iso.part* prostos.iso"
+              echo
+              echo "Linux / macOS:"
+              echo "  cat prostos.iso.part* > prostos.iso"
+              echo
+              echo "Затем сверьте контрольную сумму:"
+              echo "  sha256sum prostos.iso    (Linux)"
+              echo "  certutil -hashfile prostos.iso SHA256    (Windows)"
+            } > JOIN-PARTS.txt
+          fi
+
+      - name: Publish GitHub Release
+        if: hashFiles('live/*.iso', 'prostos.iso.part*') != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          if ls prostos.iso.part* >/dev/null 2>&1; then
+            ASSETS="SHA256SUMS.txt JOIN-PARTS.txt $(ls prostos.iso.part*)"
+          else
+            ASSETS="SHA256SUMS.txt live/$ISO_NAME"
+          fi
+          # shellcheck disable=SC2086
+          gh release create "$TAG" $ASSETS \
+            --title "ProstOS 1.0 — сборка ${{ github.run_number }}" \
+            --notes "Готовый ISO-образ ProstOS 1.0 (Debian 13 + XFCE). Контрольная сумма — в SHA256SUMS.txt."
+
+      - name: Upload artifact
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: prostos-iso
+          path: |
+            live/*.iso
+            prostos.iso.part*
+            SHA256SUMS.txt
+            JOIN-PARTS.txt
+            build.log
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 0
+
+      - name: Build log tail
+        if: always()
+        run: |
+          echo "=== last 200 lines of build.log ==="
+          tail -n 200 build.log 2>/dev/null || echo "no build.log"

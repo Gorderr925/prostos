@@ -1,0 +1,35 @@
+---
+componentName:   prostos
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 860px,600px
+windowPlacement: center
+
+strings:
+    productName:         ProstOS
+    shortProductName:    ProstOS
+    version:             1.0
+    shortVersion:        1.0
+    versionedName:       ProstOS 1.0
+    shortVersionedName:  ProstOS 1.0
+    bootloaderEntryName: ProstOS
+    productUrl:          https://github.com/
+    supportUrl:          https://github.com/
+    knownIssuesUrl:      https://github.com/
+    releaseNotesUrl:     https://github.com/
+    donateUrl:           https://github.com/
+
+sidebar: widget
+navigation: widget
+
+images:
+    productLogo:         "logo.svg"
+    productIcon:         "logo.svg"
+    productWelcome:      "welcome.svg"
+
+style:
+   SidebarBackground:        "#14532d"
+   SidebarText:              "#FFFFFF"
+   SidebarTextCurrent:       "#f0fdf4"
+   SidebarBackgroundCurrent: "#22c55e"

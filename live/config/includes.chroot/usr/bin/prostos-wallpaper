@@ -1,0 +1,15 @@
+#!/bin/sh
+# Set the ProstOS wallpaper on every XFCE monitor and workspace.
+WALLPAPER=/usr/share/backgrounds/prostos/wallpaper.svg
+
+props="$(xfconf-query -c xfce4-desktop -l 2>/dev/null || true)"
+
+for prop in $(printf '%s\n' "$props" | grep '/last-image$'); do
+	xfconf-query -c xfce4-desktop -p "$prop" -s "$WALLPAPER" 2>/dev/null || true
+done
+
+for prop in $(printf '%s\n' "$props" | grep '/image-style$'); do
+	xfconf-query -c xfce4-desktop -p "$prop" -s 5 2>/dev/null || true
+done
+
+exit 0

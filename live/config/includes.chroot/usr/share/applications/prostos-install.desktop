@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Установить ProstOS
+Name[en]=Install ProstOS
+Comment=Установить систему на компьютер
+Comment[en]=Install ProstOS on this computer
+Exec=/usr/bin/prostos-install
+Icon=prostos
+Terminal=false
+Categories=System;
+Keywords=install;setup;prostos;calamares;
+StartupNotify=true
+StartupWMClass=calamares
