@@ -43,13 +43,13 @@
     <property name="plugin-1" type="string" value="whiskermenu">
       <property name="button-icon" type="string" value="prostos"/>
       <property name="button-title" type="string" value="ProstOS"/>
-      <property name="show-button-title" type="bool" value="false"/>
+      <property name="show-button-title" type="bool" value="true"/>
       <property name="favorites" type="array">
         <value type="string" value="firefox-esr.desktop"/>
         <value type="string" value="thunar.desktop"/>
         <value type="string" value="xfce4-terminal.desktop"/>
         <value type="string" value="libreoffice-writer.desktop"/>
-        <value type="string" value="prostos-welcome.desktop"/>
+        <value type="string" value="prostos-apps.desktop"/>
         <value type="string" value="prostos-install.desktop"/>
       </property>
     </property>

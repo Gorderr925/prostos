@@ -1,0 +1,48 @@
+#!/bin/sh
+# Одноразовая уборка после установки ProstOS на диск.
+# Запускается systemd при загрузке установленной системы и в live-режиме
+# сразу выходит, ничего не делая.
+set -u
+
+if grep -q 'boot=live' /proc/cmdline 2>/dev/null; then
+	exit 0
+fi
+[ -e /etc/prostos-installed ] && exit 0
+
+for home in /home/*; do
+	[ -d "$home" ] || continue
+
+	for desk in "$home/Desktop" "$home/Рабочий стол" "$home/Рабочий_стол"; do
+		[ -d "$desk" ] || continue
+		rm -f "$desk/prostos-install.desktop" "$desk/prostos-welcome.desktop" 2>/dev/null || true
+	done
+
+	panel="$home/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+	if [ -f "$panel" ]; then
+		sed -i \
+			-e 's/prostos-install\.desktop/xfce4-terminal.desktop/g' \
+			-e 's/prostos-welcome\.desktop/xfce4-terminal.desktop/g' \
+			"$panel" 2>/dev/null || true
+	fi
+
+	# Окно «Центр приложений» должно показаться один раз уже в установленной системе
+	rm -f "$home/.config/prostos/apps-offered" 2>/dev/null || true
+	rm -f "$home/.config/prostos/welcome-shown" 2>/dev/null || true
+done
+
+# Всё, что нужно только в live-режиме
+rm -f /etc/xdg/autostart/zz-prostos-welcome.desktop 2>/dev/null || true
+rm -f /etc/xdg/autostart/zz-prostos-desktop-icons.desktop 2>/dev/null || true
+rm -f /etc/sudoers.d/010-prostos-live 2>/dev/null || true
+rm -f /usr/share/applications/prostos-install.desktop 2>/dev/null || true
+rm -f /usr/share/applications/prostos-welcome.desktop 2>/dev/null || true
+rm -f /usr/bin/prostos-install 2>/dev/null || true
+rm -f /usr/bin/prostos-welcome 2>/dev/null || true
+rm -f /usr/bin/prostos-welcome-prompt 2>/dev/null || true
+rm -f /usr/bin/prostos-desktop-icons 2>/dev/null || true
+
+update-desktop-database /usr/share/applications 2>/dev/null || true
+
+touch /etc/prostos-installed
+
+exit 0

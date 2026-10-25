@@ -52,8 +52,48 @@ chmod 644 /usr/share/applications/prostos-welcome.desktop 2>/dev/null || true
 chmod 644 /usr/share/applications/prostos-install.desktop 2>/dev/null || true
 chmod 440 /etc/sudoers.d/010-prostos-live 2>/dev/null || true
 chmod 644 /etc/polkit-1/rules.d/49-prostos-calamares.rules 2>/dev/null || true
-chmod 755 /usr/bin/prostos-welcome-prompt 2>/dev/null || true
+chmod 755 /usr/bin/prostos-welcome 2>/dev/null || true
 chmod 644 /etc/xdg/autostart/zz-prostos-welcome.desktop 2>/dev/null || true
+chmod 755 /usr/bin/prostos-apps 2>/dev/null || true
+chmod 755 /usr/bin/prostos-user-setup 2>/dev/null || true
+chmod 644 /etc/xdg/autostart/prostos-apps-offer.desktop 2>/dev/null || true
+chmod 644 /etc/xdg/autostart/prostos-user-setup.desktop 2>/dev/null || true
+chmod 644 /usr/share/applications/prostos-apps.desktop 2>/dev/null || true
+chmod 755 /usr/bin/prostos-postinstall 2>/dev/null || true
+chmod 755 /usr/bin/prostos-apps-offer 2>/dev/null || true
+
+# --- Уборка после установки на диск (один раз при первой загрузке) ---
+systemctl enable prostos-postinstall.service 2>/dev/null || true
+chmod 644 /etc/systemd/system/prostos-postinstall.service 2>/dev/null || true
+
+# --- Multiarch: 32-битные программы Windows ---
+if ! dpkg --print-foreign-architectures 2>/dev/null | grep -qx i386; then
+	dpkg --add-architecture i386
+fi
+apt-get update || true
+apt-get install -y --no-install-recommends wine32:i386 || echo "wine32:i386: пропущено"
+
+# --- Flathub: приложения в один клик ---
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+
+# --- Обои в PNG: надёжнее на старых видеокартах и в greeter ---
+if command -v rsvg-convert >/dev/null 2>&1 && [ -f /usr/share/backgrounds/prostos/wallpaper.svg ]; then
+	rsvg-convert -w 1920 -h 1080 /usr/share/backgrounds/prostos/wallpaper.svg \
+		-o /usr/share/backgrounds/prostos/wallpaper.png 2>/dev/null || true
+fi
+
+# --- Имя системы вместо «Debian live user» ---
+usermod -c "ProstOS" prost 2>/dev/null || true
+mkdir -p /var/lib/AccountsService/users
+cat > /var/lib/AccountsService/users/prost <<'EOF'
+[User]
+Language=ru_RU.UTF-8
+XSession=xfce
+SystemAccount=false
+Name=ProstOS
+Icon=/usr/share/icons/hicolor/scalable/apps/prostos.svg
+EOF
+chmod 600 /var/lib/AccountsService/users/prost 2>/dev/null || true
 
 # --- Desktop caches ---
 update-desktop-database /usr/share/applications 2>/dev/null || true

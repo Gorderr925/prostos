@@ -2,10 +2,10 @@
 Type=Application
 Version=1.0
 Name=ProstOS Welcome
-Name[ru]=Приветствие ProstOS
-Comment=Offer to install ProstOS and open the welcome page
-Comment[ru]=Предложить установку ProstOS и открыть страницу знакомства
-Exec=/usr/bin/prostos-welcome-prompt
+Name[ru]=Знакомство с ProstOS
+Comment=Offer to install ProstOS
+Comment[ru]=Предложить установить ProstOS
+Exec=/usr/bin/prostos-welcome
 Icon=prostos
 Terminal=false
 NoDisplay=true

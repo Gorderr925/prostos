@@ -1,0 +1,12 @@
+[Unit]
+Description=ProstOS: уборка после установки на диск
+Before=lightdm.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/prostos-postinstall
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

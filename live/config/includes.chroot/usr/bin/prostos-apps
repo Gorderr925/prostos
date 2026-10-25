@@ -1,0 +1,231 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""Центр приложений ProstOS.
+
+Показывает список полезных программ и ставит выбранные одной кнопкой.
+Ничего не скачивается втихую: пользователь видит список и нажимает сам.
+"""
+
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, Gtk  # noqa: E402
+
+# key, название, описание, тип, пакет
+APPS = [
+    ("steam", "Steam", "игры, Proton для Windows-игр", "flatpak",
+     "com.valvesoftware.Steam"),
+    ("telegram", "Telegram", "мессенджер", "flatpak",
+     "org.telegram.desktop"),
+    ("discord", "Discord", "голосовой чат и сообщества", "flatpak",
+     "com.discordapp.Discord"),
+    ("chrome", "Google Chrome", "браузер от Google", "deb",
+     "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"),
+    ("chromium", "Chromium", "открытый браузер без рекламы", "apt", "chromium"),
+    ("gimp", "GIMP", "редактор фото и картинок", "apt", "gimp"),
+    ("obs", "OBS Studio", "запись экрана и стримы", "apt", "obs-studio"),
+    ("krita", "Krita", "рисование и графика", "apt", "krita"),
+    ("qbittorrent", "qBittorrent", "загрузка файлов и торренты", "apt",
+     "qbittorrent"),
+    ("audacity", "Audacity", "запись и обработка звука", "apt", "audacity"),
+    ("thunderbird", "Thunderbird", "почта на компьютере", "apt", "thunderbird"),
+    ("lutris", "Lutris", "помощник для игр Windows", "apt", "lutris"),
+    ("vscode", "Visual Studio Code", "редактор кода", "deb",
+     "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"),
+]
+
+CSS = b"""
+window { background-color: #07211a; }
+.head { font-size: 24px; font-weight: bold; color: #ecfdf5; }
+.sub { font-size: 14px; color: #6ee7b7; }
+.name { font-size: 15px; font-weight: bold; color: #ecfdf5; }
+.desc { font-size: 13px; color: #a7f3d0; }
+button { font-size: 15px; padding: 8px 18px; }
+"""
+
+
+def build_script(selected):
+    lines = [
+        "#!/bin/bash",
+        "set -u",
+        'echo "=== Установка приложений ProstOS ==="',
+        'echo "Пароль администратора нужен один раз — для установки."',
+        "echo",
+        "sudo apt-get update",
+    ]
+    apt = []
+    flat = []
+    debs = []
+    for _name, _key, kind, pkg in selected:
+        if kind == "apt":
+            apt.append(pkg)
+        elif kind == "flatpak":
+            flat.append(pkg)
+        elif kind == "deb":
+            debs.append(pkg)
+
+    if apt:
+        lines.append("sudo apt-get install -y " + " ".join(apt))
+    if flat:
+        lines.append(
+            "flatpak remote-add --user --if-not-exists flathub "
+            "https://flathub.org/repo/flathub.flatpakrepo"
+        )
+    for pkg in flat:
+        lines.append(f"flatpak install --user -y flathub {shlex.quote(pkg)}")
+    for url in debs:
+        lines.append(
+            "tmpdeb=$(mktemp /tmp/prostos-app-XXXXXX.deb) && "
+            f"curl -L --fail -o \"$tmpdeb\" {shlex.quote(url)} && "
+            "sudo apt-get install -y \"$tmpdeb\"; rm -f \"$tmpdeb\""
+        )
+
+    lines += [
+        "echo",
+        'echo "=== Готово! Программы появятся в меню ProstOS ==="',
+        'read -r -p "Нажмите Enter, чтобы закрыть окно..." _',
+    ]
+    return "\n".join(lines) + "\n"
+
+
+class AppCenter(Gtk.Window):
+    def __init__(self, first_run=False):
+        title = "Центр приложений ProstOS"
+        super().__init__(title=title)
+        self.set_default_size(760, 640)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.connect("destroy", Gtk.main_quit)
+        self.first_run = first_run
+        self.checks = {}
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        outer.set_border_width(18)
+        self.add(outer)
+
+        head = Gtk.Label(label="Что поставим?" if first_run else "Центр приложений")
+        head.set_halign(Gtk.Align.START)
+        head.get_style_context().add_class("head")
+        outer.pack_start(head, False, False, 0)
+
+        sub_text = (
+            "Отметьте нужное — ProstOS установит всё сам. "
+            "Можно вернуться сюда в любой момент: меню → Центр приложений."
+            if first_run
+            else "Отметьте программы и нажмите «Установить выбранные»."
+        )
+        sub = Gtk.Label(label=sub_text)
+        sub.set_halign(Gtk.Align.START)
+        sub.set_line_wrap(True)
+        sub.get_style_context().add_class("sub")
+        outer.pack_start(sub, False, False, 0)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        outer.pack_start(scroll, True, True, 6)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.set_margin_start(8)
+        box.set_margin_end(8)
+        box.set_margin_top(8)
+        box.set_margin_bottom(8)
+        scroll.add(box)
+
+        for key, name, desc, kind, pkg in APPS:
+            cb = Gtk.CheckButton()
+            cb.set_margin_top(4)
+            cb.set_margin_bottom(4)
+            row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+            title_lbl = Gtk.Label()
+            title_lbl.set_markup(f"<b>{name}</b>")
+            title_lbl.set_halign(Gtk.Align.START)
+            title_lbl.get_style_context().add_class("name")
+            desc_lbl = Gtk.Label(label=desc)
+            desc_lbl.set_halign(Gtk.Align.START)
+            desc_lbl.get_style_context().add_class("desc")
+            row.pack_start(title_lbl, False, False, 0)
+            row.pack_start(desc_lbl, False, False, 0)
+            cb.add(row)
+            box.pack_start(cb, False, False, 0)
+            self.checks[key] = (cb, (name, key, kind, pkg))
+
+        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        outer.pack_start(bottom, False, False, 4)
+
+        self.status = Gtk.Label(label="")
+        self.status.set_halign(Gtk.Align.START)
+        bottom.pack_start(self.status, True, True, 0)
+
+        close_btn = Gtk.Button(label="Закрыть")
+        close_btn.connect("clicked", lambda *_: Gtk.main_quit())
+        bottom.pack_end(close_btn, False, False, 0)
+
+        install_btn = Gtk.Button(label="Установить выбранные")
+        install_btn.get_style_context().add_class("suggested-action")
+        install_btn.connect("clicked", self.on_install)
+        bottom.pack_end(install_btn, False, False, 0)
+
+        self.show_all()
+
+    def on_install(self, _widget):
+        selected = [meta for cb, meta in self.checks.values() if cb.get_active()]
+        if not selected:
+            self.status.set_text("Ничего не выбрано")
+            return
+
+        script = build_script(selected)
+        path = os.path.join(tempfile.gettempdir(), "prostos-apps-install.sh")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(script)
+        os.chmod(path, 0o755)
+
+        subprocess.Popen(
+            [
+                "xfce4-terminal",
+                "--title=Установка приложений ProstOS",
+                "--geometry=100x30",
+                "-e",
+                f"bash {path}",
+            ]
+        )
+        self.status.set_text(
+            f"Выбрано: {len(selected)}. Установка идёт в открывшемся окне."
+        )
+        if self.first_run:
+            mark_offered()
+
+
+def mark_offered():
+    path = os.path.expanduser("~/.config/prostos/apps-offered")
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("1\n")
+    except OSError:
+        pass
+
+
+def main():
+    first_run = "--first-run" in sys.argv
+    window = AppCenter(first_run=first_run)
+    window.show_all()
+    Gtk.main()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,200 @@
+﻿#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""Экран знакомства ProstOS.
+
+Показывается один раз за загрузку live-сессии: комплимент, короткое объяснение
+и две кнопки — установить систему или просто посмотреть.
+"""
+
+import os
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk, GdkPixbuf, Gtk, GLib  # noqa: E402
+
+MARKER = os.path.expanduser("~/.config/prostos/welcome-shown")
+LOGO = "/usr/share/icons/hicolor/scalable/apps/prostos.svg"
+WALLPAPER = "/usr/share/backgrounds/prostos/wallpaper.png"
+
+CSS = b"""
+window {
+    background-color: #07211a;
+}
+.title {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ecfdf5;
+}
+.subtitle {
+    font-size: 17px;
+    color: #a7f3d0;
+}
+.body {
+    font-size: 15px;
+    color: #d1fae5;
+}
+.point {
+    font-size: 14px;
+    color: #6ee7b7;
+}
+button {
+    font-size: 15px;
+    padding: 10px 22px;
+}
+"""
+
+
+def mark_seen():
+    try:
+        os.makedirs(os.path.dirname(MARKER), exist_ok=True)
+        with open(MARKER, "w", encoding="utf-8") as fh:
+            fh.write("1\n")
+    except OSError:
+        pass
+
+
+def make_button(label, style=None):
+    btn = Gtk.Button(label=label)
+    if style:
+        btn.get_style_context().add_class(style)
+    btn.set_size_request(240, 48)
+    return btn
+
+
+class Welcome(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Добро пожаловать в ProstOS")
+        self.set_default_size(880, 560)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_keep_above(True)
+        self.set_decorated(True)
+        self.connect("destroy", Gtk.main_quit)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.add(outer)
+
+        if os.path.exists(WALLPAPER):
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    WALLPAPER, 880, 560, False
+                )
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            except Exception:
+                image = Gtk.Image.new_from_file(WALLPAPER)
+            image.set_halign(Gtk.Align.FILL)
+            image.set_valign(Gtk.Align.FILL)
+            overlay = Gtk.Overlay()
+            overlay.add(image)
+            content = self.build_content()
+            content.set_halign(Gtk.Align.CENTER)
+            content.set_valign(Gtk.Align.CENTER)
+            overlay.add_overlay(content)
+            outer.pack_start(overlay, True, True, 0)
+        else:
+            outer.pack_start(self.build_content(), True, True, 40)
+
+        self.show_all()
+
+    def build_content(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_border_width(48)
+        box.set_size_request(760, -1)
+
+        if os.path.exists(LOGO):
+            logo = Gtk.Image.new_from_file(LOGO)
+            logo.set_pixel_size(96)
+            box.pack_start(logo, False, False, 0)
+
+        title = Gtk.Label(label="Вы выбрали отличный вариант 🎉")
+        title.get_style_context().add_class("title")
+        box.pack_start(title, False, False, 0)
+
+        subtitle = Gtk.Label(
+            label="Надеемся, вам у нас понравится — и вы останетесь."
+        )
+        subtitle.get_style_context().add_class("subtitle")
+        box.pack_start(subtitle, False, False, 4)
+
+        body = Gtk.Label()
+        body.set_line_wrap(True)
+        body.set_max_width_chars(66)
+        body.set_justify(Gtk.Justification.CENTER)
+        body.set_text(
+            "ProstOS — система, которая уважает своего владельца: без телеметрии, "
+            "без рекламы и без «обновитесь прямо сейчас». Всё уже настроено: "
+            "русский язык, браузер, документы и видео."
+        )
+        body.get_style_context().add_class("body")
+        box.pack_start(body, False, False, 8)
+
+        for text in (
+            "✓  Работает прямо с флешки — ваш диск и Windows не изменятся",
+            "✓  Установка на компьютер занимает 10–20 минут",
+            "✓  Всё бесплатно и с открытым кодом",
+        ):
+            point = Gtk.Label(label=text)
+            point.set_halign(Gtk.Align.START)
+            point.get_style_context().add_class("point")
+            box.pack_start(point, False, False, 0)
+
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        buttons.set_halign(Gtk.Align.CENTER)
+        buttons.set_margin_top(18)
+
+        install = make_button("Установить ProstOS", "suggested-action")
+        install.connect("clicked", self.on_install)
+        buttons.pack_start(install, False, False, 0)
+
+        look = make_button("Хочу попробовать")
+        look.connect("clicked", self.on_look)
+        buttons.pack_start(look, False, False, 0)
+
+        box.pack_start(buttons, False, False, 0)
+
+        hint = Gtk.Label(
+            label="Значок «Установить ProstOS» останется на рабочем столе — "
+            "установить можно в любой момент."
+        )
+        hint.set_line_wrap(True)
+        hint.set_max_width_chars(70)
+        hint.set_justify(Gtk.Justification.CENTER)
+        hint.get_style_context().add_class("point")
+        box.pack_start(hint, False, False, 10)
+
+        return box
+
+    def on_install(self, _widget):
+        mark_seen()
+        subprocess.Popen(["/usr/bin/prostos-install"])
+        Gtk.main_quit()
+
+    def on_look(self, _widget):
+        mark_seen()
+        Gtk.main_quit()
+
+
+def main():
+    if os.path.exists("/etc/prostos-installed"):
+        return 0
+    if os.path.exists(MARKER):
+        return 0
+
+    GLib.timeout_add_seconds(2, lambda: (Welcome(), False)[1])
+    Gtk.main()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

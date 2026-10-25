@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS App Center
+Name[ru]=Центр приложений ProstOS
+Comment=Install useful applications in one click
+Comment[ru]=Установить полезные программы в один клик
+Exec=/usr/bin/prostos-apps
+Icon=prostos
+Terminal=false
+Categories=System;PackageManager;
+Keywords=prostos;apps;install;steam;telegram;
+StartupNotify=true

@@ -34,8 +34,32 @@ xfce4-whiskermenu-plugin
 xfce4-pulseaudio-plugin
 xfce4-notifyd
 xfce4-xkb-plugin
+xfce4-clipman-plugin
+xfce4-screenshooter
 zenity
 xfce4-terminal
+
+galculator
+mousepad
+ristretto
+file-roller
+p7zip-full
+unzip
+cabextract
+htop
+xclip
+gvfs-backends
+tumbler
+
+python3-gi
+gir1.2-gtk-3.0
+librsvg2-bin
+
+flatpak
+wine
+wine64
+wine-binfmt
+winetricks
 
 polkitd
 pkexec
@@ -45,7 +69,6 @@ xdg-user-dirs
 network-manager
 network-manager-gnome
 thunar-archive-plugin
-file-roller
 
 fonts-noto-core
 fonts-noto-color-emoji

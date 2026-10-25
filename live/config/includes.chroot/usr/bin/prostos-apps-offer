@@ -1,0 +1,10 @@
+#!/bin/sh
+# Один раз после установки предлагаем поставить удобные приложения.
+set -u
+
+grep -q 'boot=live' /proc/cmdline 2>/dev/null && exit 0
+[ -e /etc/prostos-installed ] || exit 0
+[ -e "$HOME/.config/prostos/apps-offered" ] && exit 0
+
+sleep 6
+exec /usr/bin/prostos-apps --first-run

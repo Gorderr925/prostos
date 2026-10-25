@@ -1,0 +1,14 @@
+[Default Applications]
+text/plain=mousepad.desktop
+text/csv=libreoffice-calc.desktop
+application/x-ms-dos-executable=wine.desktop
+application/x-msi=wine.desktop
+application/x-msdownload=wine.desktop
+application/pdf=ristretto.desktop
+image/png=ristretto.desktop
+image/jpeg=ristretto.desktop
+audio/mpeg=vlc.desktop
+video/mp4=vlc.desktop
+
+[Added Associations]
+application/x-ms-dos-executable=wine.desktop;

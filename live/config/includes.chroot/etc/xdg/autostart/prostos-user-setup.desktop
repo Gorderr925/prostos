@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS user setup
+Name[ru]=Подготовка папок ProstOS
+Comment=Create desktop folder and document templates
+Comment[ru]=Создать папку рабочего стола и шаблоны документов
+Exec=/usr/bin/prostos-user-setup
+Icon=prostos
+Terminal=false
+NoDisplay=true
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=2

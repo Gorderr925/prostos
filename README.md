@@ -1,6 +1,6 @@
 ﻿# ProstOS
 
-![версия](https://img.shields.io/badge/версия-2.0-22c55e)
+![версия](https://img.shields.io/badge/версия-3.0-22c55e)
 ![основа](https://img.shields.io/badge/основа-Debian%2013%20Trixie-a80030)
 ![рабочий стол](https://img.shields.io/badge/рабочий%20стол-XFCE%204.20-0ea5e9)
 ![лицензия](https://img.shields.io/badge/лицензия-MIT-64748b)
@@ -18,8 +18,9 @@
 
 | Версия | Что это | Файл |
 |---|---|---|
-| [ProstOS 2.0](https://github.com/Gorderr925/prostos/releases/tag/v2.0) | актуальная: новые обои, окно знакомства, прошивки NVIDIA | `ProstOS-2.0.iso` |
-| [ProstOS 1.0](https://github.com/Gorderr925/prostos/releases/tag/v1.0) | первый выпуск, оставлен как история проекта | `ProstOS-1.0.iso` |
+| [ProstOS 3.0](https://github.com/Gorderr925/prostos/releases/tag/v3.0) | актуальная: экран знакомства, центр приложений, Wine, чистая установка | `ProstOS-3.0.iso` |
+| [ProstOS 2.0](https://github.com/Gorderr925/prostos/releases/tag/v2.0) | новые обои, окно знакомства, прошивки NVIDIA | `ProstOS-2.0.iso` |
+| [ProstOS 1.0](https://github.com/Gorderr925/prostos/releases/tag/v1.0) | первый выпуск, история проекта | `ProstOS-1.0.iso` |
 
 Образ весит около 3 ГБ, поэтому в релизе он лежит частями `prostos.iso.part00`,
 `part01`, … Склеить в Windows: `copy /b prostos.iso.part* prostos.iso`.
@@ -30,8 +31,12 @@
 - XFCE 4.20, LightDM, тема Arc, иконки Papirus;
 - русский язык, раскладка RU/EN, часовой пояс Europe/Moscow;
 - Firefox ESR, LibreOffice (Writer/Calc/Impress), VLC, GParted, Synaptic;
-- Calamares — установка в пару кликов;
-- приветственная страница о системе и open source;
+- Calamares — установка в пару кликов, сразу с разметки диска;
+- экран знакомства с комплиментом и двумя кнопками;
+- «Центр приложений»: Steam/Proton, Telegram, Discord, Chrome, GIMP, OBS и другие в один клик;
+- Wine — двойной клик по `.exe` запускает программу Windows;
+- после установки система убирает всё «флешечное»: значки установки исчезают сами;
+- правый клик по рабочему столу: создать папку, текстовый документ, открыть терминал здесь;
 - поддержка persistence на флешке (сохранение изменений между загрузками).
 
 ## Почему ProstOS
@@ -97,8 +102,8 @@
    а также в артефакте `prostos-iso`.
 
 Номер версии задаётся файлом `VERSION` в корне репозитория, а описание релиза
-берётся из раздела этой версии в `CHANGELOG.md`. Чтобы выпустить 3.0, достаточно
-поменять `VERSION` на `3.0` и дописать раздел в `CHANGELOG.md`.
+берётся из раздела этой версии в `CHANGELOG.md`. Чтобы выпустить 4.0, достаточно
+поменять `VERSION` на `4.0` и дописать раздел в `CHANGELOG.md`.
 
 Сборка идёт в контейнере `debian:trixie`, на вашем ПК ничего устанавливать не нужно.
 Если ISO получился больше 1,9 ГБ, он автоматически делится на части

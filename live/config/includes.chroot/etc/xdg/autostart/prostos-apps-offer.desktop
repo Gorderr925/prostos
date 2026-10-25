@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS App Center Offer
+Name[ru]=Предложение приложений ProstOS
+Comment=Offer useful applications after installation
+Comment[ru]=Предложить полезные программы после установки
+Exec=/usr/bin/prostos-apps-offer
+Icon=prostos
+Terminal=false
+NoDisplay=true
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5

@@ -1,0 +1,38 @@
+#!/bin/sh
+# Подготовка домашней папки: шаблоны документов и папка рабочего стола.
+# Запускается при каждом входе, но ничего не перезаписывает.
+set -u
+
+i=0
+while [ ! -f "$HOME/.config/user-dirs.dirs" ] && [ "$i" -lt 15 ]; do
+	sleep 1
+	i=$((i + 1))
+done
+if command -v xdg-user-dirs-update >/dev/null 2>&1; then
+	xdg-user-dirs-update >/dev/null 2>&1 || true
+fi
+
+desktop="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+[ -n "$desktop" ] || desktop="$HOME/Рабочий стол"
+mkdir -p "$desktop" 2>/dev/null || true
+
+templates="$(xdg-user-dir TEMPLATES 2>/dev/null || true)"
+if [ -z "$templates" ] || [ "$templates" = "$HOME" ]; then
+	templates="$HOME/Шаблоны"
+fi
+mkdir -p "$templates" 2>/dev/null || true
+
+if [ -d "$templates" ]; then
+	[ -f "$templates/Текстовый документ.txt" ] || : > "$templates/Текстовый документ.txt" 2>/dev/null || true
+	if [ ! -f "$templates/Таблица.csv" ]; then
+		printf 'Название;Количество;Цена\n' > "$templates/Таблица.csv" 2>/dev/null || true
+	fi
+fi
+
+# Wine: один раз готовим окружение, чтобы при первом .exe не выскакивали
+# окна про wine-mono и wine-gecko.
+if command -v wine >/dev/null 2>&1 && [ ! -d "$HOME/.wine" ]; then
+	WINEDLLOVERRIDES="mscoree,mshtml=" WINEDEBUG=-all wineboot -i >/dev/null 2>&1 &
+fi
+
+exit 0

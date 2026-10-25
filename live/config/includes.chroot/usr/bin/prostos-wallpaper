@@ -1,8 +1,25 @@
 #!/bin/sh
 # Set the ProstOS wallpaper on every XFCE monitor and workspace.
-WALLPAPER=/usr/share/backgrounds/prostos/wallpaper.svg
+# Retries until the desktop channel exists: at login xfce4-desktop may not be
+# ready yet, and that is what used to leave the blue XFCE default wallpaper.
+WALLPAPER_PNG=/usr/share/backgrounds/prostos/wallpaper.png
+WALLPAPER_SVG=/usr/share/backgrounds/prostos/wallpaper.svg
 
-props="$(xfconf-query -c xfce4-desktop -l 2>/dev/null || true)"
+if [ -f "$WALLPAPER_PNG" ]; then
+	WALLPAPER="$WALLPAPER_PNG"
+else
+	WALLPAPER="$WALLPAPER_SVG"
+fi
+
+i=0
+while [ "$i" -lt 40 ]; do
+	props="$(xfconf-query -c xfce4-desktop -l 2>/dev/null || true)"
+	if printf '%s\n' "$props" | grep -q '/last-image$'; then
+		break
+	fi
+	sleep 1
+	i=$((i + 1))
+done
 
 for prop in $(printf '%s\n' "$props" | grep '/last-image$'); do
 	xfconf-query -c xfce4-desktop -p "$prop" -s "$WALLPAPER" 2>/dev/null || true
@@ -11,5 +28,12 @@ done
 for prop in $(printf '%s\n' "$props" | grep '/image-style$'); do
 	xfconf-query -c xfce4-desktop -p "$prop" -s 5 2>/dev/null || true
 done
+
+# Если монитор ещё не появился в настройках — создаём запись сами.
+if ! printf '%s\n' "$props" | grep -q '/last-image$'; then
+	base="/backdrop/screen0/monitor0/workspace0"
+	xfconf-query -c xfce4-desktop -p "$base/last-image" -n -t string -s "$WALLPAPER" 2>/dev/null || true
+	xfconf-query -c xfce4-desktop -p "$base/image-style" -n -t int -s 5 2>/dev/null || true
+fi
 
 exit 0

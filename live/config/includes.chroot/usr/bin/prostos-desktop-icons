@@ -18,7 +18,7 @@ if [ -z "$desktop_dir" ] || [ "$desktop_dir" = "$HOME" ]; then
 fi
 mkdir -p "$desktop_dir" 2>/dev/null || exit 0
 
-for app in prostos-install prostos-welcome; do
+for app in prostos-install; do
 	src="/usr/share/applications/$app.desktop"
 	dst="$desktop_dir/$app.desktop"
 	[ -f "$src" ] || continue

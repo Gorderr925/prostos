@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+  <icon>utilities-terminal</icon>
+  <name>Открыть терминал здесь</name>
+  <submenu></submenu>
+  <unique-id>1730000000000001-1</unique-id>
+  <command>exo-open --working-directory %f --launch TerminalEmulator</command>
+  <description>Открыть терминал в этой папке</description>
+  <range></range>
+  <patterns>*</patterns>
+  <startup-notify/>
+  <directories/>
+</action>
+<action>
+  <icon>accessories-text-editor</icon>
+  <name>Создать текстовый документ</name>
+  <submenu></submenu>
+  <unique-id>1730000000000002-1</unique-id>
+  <command>bash -c 'f="%f/Новый документ.txt"; n=1; while [ -e "$f" ]; do f="%f/Новый документ ($n).txt"; n=$((n+1)); done; : &gt; "$f"; mousepad "$f"'</command>
+  <description>Создать пустой текстовый файл в этой папке</description>
+  <range></range>
+  <patterns>*</patterns>
+  <directories/>
+</action>
+<action>
+  <icon>edit-copy</icon>
+  <name>Копировать путь</name>
+  <submenu></submenu>
+  <unique-id>1730000000000003-1</unique-id>
+  <command>bash -c 'printf "%s" "%f" | xclip -selection clipboard'</command>
+  <description>Скопировать полный путь в буфер обмена</description>
+  <range></range>
+  <patterns>*</patterns>
+  <directories/>
+</action>
+<action>
+  <icon>folder-new</icon>
+  <name>Открыть в новой вкладке</name>
+  <submenu></submenu>
+  <unique-id>1730000000000004-1</unique-id>
+  <command>thunar %f</command>
+  <description>Открыть папку в новом окне Thunar</description>
+  <range></range>
+  <patterns>*</patterns>
+  <directories/>
+</action>
+</actions>
