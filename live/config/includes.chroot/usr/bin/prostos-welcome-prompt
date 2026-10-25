@@ -1,0 +1,30 @@
+#!/bin/sh
+# First-boot greeting for the live session: offer installation right away,
+# and open the welcome page if the user prefers to look around first.
+set -u
+
+sleep 4
+
+marker="$HOME/.config/prostos/welcome-shown"
+if [ -e "$marker" ]; then
+	exit 0
+fi
+mkdir -p "$HOME/.config/prostos" 2>/dev/null || true
+
+text="Добро пожаловать в ProstOS!
+
+Система загружена с флешки: ваш диск и Windows не изменены. Можно спокойно всё посмотреть — интернет, звук, видео, программы.
+
+Когда решите остаться — нажмите «Установить ProstOS». Это займёт 10–20 минут."
+
+if zenity --question --title="Добро пожаловать в ProstOS" --width=560 \
+	--ok-label="Установить ProstOS" --cancel-label="Сначала посмотреть" \
+	--text="$text" 2>/dev/null; then
+	touch "$marker" 2>/dev/null || true
+	exec /usr/bin/prostos-install
+fi
+
+touch "$marker" 2>/dev/null || true
+xdg-open /usr/share/prostos/welcome.html >/dev/null 2>&1 &
+
+exit 0

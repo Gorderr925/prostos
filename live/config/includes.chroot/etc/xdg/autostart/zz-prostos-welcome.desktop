@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProstOS Welcome
+Name[ru]=Приветствие ProstOS
+Comment=Offer to install ProstOS and open the welcome page
+Comment[ru]=Предложить установку ProstOS и открыть страницу знакомства
+Exec=/usr/bin/prostos-welcome-prompt
+Icon=prostos
+Terminal=false
+NoDisplay=true
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=3

@@ -52,6 +52,8 @@ chmod 644 /usr/share/applications/prostos-welcome.desktop 2>/dev/null || true
 chmod 644 /usr/share/applications/prostos-install.desktop 2>/dev/null || true
 chmod 440 /etc/sudoers.d/010-prostos-live 2>/dev/null || true
 chmod 644 /etc/polkit-1/rules.d/49-prostos-calamares.rules 2>/dev/null || true
+chmod 755 /usr/bin/prostos-welcome-prompt 2>/dev/null || true
+chmod 644 /etc/xdg/autostart/zz-prostos-welcome.desktop 2>/dev/null || true
 
 # --- Desktop caches ---
 update-desktop-database /usr/share/applications 2>/dev/null || true

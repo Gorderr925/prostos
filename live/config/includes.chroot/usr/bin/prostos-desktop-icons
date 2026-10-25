@@ -2,11 +2,19 @@
 # Put the ProstOS launchers on the user's desktop and mark them trusted for XFCE.
 set -u
 
-sleep 2
+# Let xdg-user-dirs create the (localized) folders first, otherwise the Russian
+# locale gives "Рабочий стол" and our icons would land in an invisible "Desktop".
+command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update >/dev/null 2>&1 || true
+i=0
+while [ ! -f "$HOME/.config/user-dirs.dirs" ] && [ "$i" -lt 15 ]; do
+	sleep 1
+	i=$((i + 1))
+done
+sleep 1
 
 desktop_dir="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
 if [ -z "$desktop_dir" ] || [ "$desktop_dir" = "$HOME" ]; then
-	desktop_dir="$HOME/Desktop"
+	desktop_dir="$HOME/Рабочий стол"
 fi
 mkdir -p "$desktop_dir" 2>/dev/null || exit 0
 

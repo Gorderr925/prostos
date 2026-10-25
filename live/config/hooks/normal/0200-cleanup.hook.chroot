@@ -6,4 +6,9 @@ rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
 find /var/log -type f -exec truncate -s 0 {} \; 2>/dev/null || true
 
+# Keep licence files, drop the rest of the packaged documentation (saves ~150 MB).
+for d in /usr/share/doc/*/; do
+	find "$d" -mindepth 1 -maxdepth 1 ! -name copyright -exec rm -rf {} + 2>/dev/null || true
+done
+
 exit 0
