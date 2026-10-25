@@ -62,8 +62,8 @@ firmware-amd-graphics
 firmware-sof-signed
 firmware-intel-sound
 
-grub-pc
-grub-efi-amd64
+grub-pc-bin
+grub-efi-amd64-bin
 grub-efi-amd64-signed
 shim-signed
 efibootmgr
