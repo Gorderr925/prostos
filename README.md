@@ -1,10 +1,28 @@
 # ProstOS
 
+![версия](https://img.shields.io/badge/версия-2.0-22c55e)
+![основа](https://img.shields.io/badge/основа-Debian%2013%20Trixie-a80030)
+![рабочий стол](https://img.shields.io/badge/рабочий%20стол-XFCE%204.20-0ea5e9)
+![лицензия](https://img.shields.io/badge/лицензия-MIT-64748b)
+
 Лёгкий и дружелюбный дистрибутив Linux для тех, кто только знакомится с
 открытым кодом. Собран на **Debian 13 (Trixie)** с рабочим столом **XFCE** и
 графическим установщиком **Calamares**.
 
 > Просто. Открыто. Твоё.
+
+## Скачать
+
+Готовые образы лежат в разделе [**Releases**](https://github.com/Gorderr925/prostos/releases) —
+по одному релизу на каждую версию:
+
+| Версия | Что это | Файл |
+|---|---|---|
+| [ProstOS 2.0](https://github.com/Gorderr925/prostos/releases/tag/v2.0) | актуальная: новые обои, окно знакомства, прошивки NVIDIA | `ProstOS-2.0.iso` |
+| [ProstOS 1.0](https://github.com/Gorderr925/prostos/releases/tag/v1.0) | первый выпуск, оставлен как история проекта | `ProstOS-1.0.iso` |
+
+Образ весит около 3 ГБ, поэтому в релизе он лежит частями `prostos.iso.part00`,
+`part01`, … Склеить в Windows: `copy /b prostos.iso.part* prostos.iso`.
 
 ## Что внутри
 
@@ -21,8 +39,12 @@
 1. Создайте публичный репозиторий на GitHub (например, `prostos`).
 2. Загрузите в него содержимое этой папки (ветка `main`).
 3. Откройте **Actions → Build ProstOS ISO → Run workflow**.
-4. Через 20–60 минут образ появится в разделе **Releases** (тег `build-N`),
+4. Через 20–60 минут образ появится в разделе **Releases** (тег вида `v2.0`),
    а также в артефакте `prostos-iso`.
+
+Номер версии задаётся файлом `VERSION` в корне репозитория, а описание релиза
+берётся из раздела этой версии в `CHANGELOG.md`. Чтобы выпустить 3.0, достаточно
+поменять `VERSION` на `3.0` и дописать раздел в `CHANGELOG.md`.
 
 Сборка идёт в контейнере `debian:trixie`, на вашем ПК ничего устанавливать не нужно.
 Если ISO получился больше 1,9 ГБ, он автоматически делится на части
@@ -81,6 +103,8 @@ live/config/includes.chroot/         файлы, которые попадут �
   etc/                               брендинг, LightDM, GTK, XFCE
   usr/share/prostos/                 логотип, обои, приветственная страница
   usr/share/calamares/branding/      оформление установщика
+VERSION                              номер текущей версии (2.0)
+CHANGELOG.md                         описание изменений каждой версии
 .github/workflows/build.yml          сборка ISO в GitHub Actions
 ```
 

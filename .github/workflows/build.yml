@@ -94,16 +94,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="build-${{ github.run_number }}"
+          VERSION="$(tr -d ' \r\n' < VERSION)"
+          TAG="v$VERSION"
+          TITLE="ProstOS $VERSION"
+          echo "релиз: $TITLE (тег $TAG)"
           if ls prostos.iso.part* >/dev/null 2>&1; then
             ASSETS="SHA256SUMS.txt JOIN-PARTS.txt $(ls prostos.iso.part*)"
           else
             ASSETS="SHA256SUMS.txt live/$ISO_NAME"
           fi
-          # shellcheck disable=SC2086
-          gh release create "$TAG" $ASSETS \
-            --title "ProstOS 1.0 — сборка ${{ github.run_number }}" \
-            --notes "Готовый ISO-образ ProstOS 1.0 (Debian 13 + XFCE). Контрольная сумма — в SHA256SUMS.txt."
+          # Заметки к релизу берём из CHANGELOG.md — раздел текущей версии
+          awk -v ver="## $VERSION" '$0==ver{f=1;next} /^## /{f=0} f' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            printf 'ProstOS %s — сборка %s\n' "$VERSION" "${{ github.run_number }}" > release-notes.md
+          fi
+          {
+            echo
+            echo "---"
+            echo "Сборка №${{ github.run_number }} · контрольная сумма в SHA256SUMS.txt"
+            echo "Сайт проекта: https://github.com/Gorderr925/prostos"
+          } >> release-notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" $ASSETS --clobber
+            gh release edit "$TAG" --title "$TITLE" --notes-file release-notes.md
+          else
+            # shellcheck disable=SC2086
+            gh release create "$TAG" $ASSETS --title "$TITLE" --notes-file release-notes.md
+          fi
 
       - name: Upload artifact
         if: always()
