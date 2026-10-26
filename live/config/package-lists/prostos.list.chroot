@@ -22,6 +22,8 @@ vlc
 vlc-l10n
 gparted
 gnome-disk-utility
+mesa-vulkan-drivers
+vulkan-tools
 synaptic
 
 arc-theme
@@ -69,7 +71,11 @@ xdg-user-dirs
 network-manager
 network-manager-gnome
 thunar-archive-plugin
+blueman
+bluez
+system-config-printer
 
+fonts-inter
 fonts-noto-core
 fonts-noto-color-emoji
 fonts-liberation

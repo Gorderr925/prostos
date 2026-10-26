@@ -1,0 +1,33 @@
+/* ProstOS: фирменные акценты поверх темы Arc-Dark.
+   Только цвета — чтобы ничего не сломать в геометрии. */
+
+@define-color theme_selected_bg_color #22c55e;
+@define-color theme_selected_fg_color #04120d;
+@define-color accent_color #22c55e;
+@define-color accent_bg_color #16a34a;
+@define-color accent_fg_color #04120d;
+
+button.suggested-action {
+  background-image: none;
+  background-color: #16a34a;
+  color: #04120d;
+  font-weight: 600;
+}
+
+button.suggested-action:hover {
+  background-color: #22c55e;
+}
+
+selection,
+*:selected {
+  background-color: rgba(34, 197, 94, 0.35);
+  color: #ecfdf5;
+}
+
+progressbar progress {
+  background-image: linear-gradient(to right, #16a34a, #4ade80);
+}
+
+switch:checked {
+  background-color: #16a34a;
+}

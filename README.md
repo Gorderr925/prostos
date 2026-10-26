@@ -1,6 +1,6 @@
-﻿# ProstOS
+# ProstOS
 
-![версия](https://img.shields.io/badge/версия-3.0-22c55e)
+![версия](https://img.shields.io/badge/версия-5.0-22c55e)
 ![основа](https://img.shields.io/badge/основа-Debian%2013%20Trixie-a80030)
 ![рабочий стол](https://img.shields.io/badge/рабочий%20стол-XFCE%204.20-0ea5e9)
 ![лицензия](https://img.shields.io/badge/лицензия-MIT-64748b)
@@ -18,6 +18,7 @@
 
 | Версия | Что это | Файл |
 |---|---|---|
+| [ProstOS 5.0](https://github.com/Gorderr925/prostos/releases/tag/v5.0) | брендинг, панель как в Mint, рабочая установка | `ProstOS-5.0.iso` |
 | [ProstOS 3.0](https://github.com/Gorderr925/prostos/releases/tag/v3.0) | актуальная: экран знакомства, центр приложений, Wine, чистая установка | `ProstOS-3.0.iso` |
 | [ProstOS 2.0](https://github.com/Gorderr925/prostos/releases/tag/v2.0) | новые обои, окно знакомства, прошивки NVIDIA | `ProstOS-2.0.iso` |
 | [ProstOS 1.0](https://github.com/Gorderr925/prostos/releases/tag/v1.0) | первый выпуск, история проекта | `ProstOS-1.0.iso` |
@@ -162,7 +163,7 @@ live/config/includes.chroot/         файлы, которые попадут �
   etc/                               брендинг, LightDM, GTK, XFCE
   usr/share/prostos/                 логотип, обои, приветственная страница
   usr/share/calamares/branding/      оформление установщика
-VERSION                              номер текущей версии (2.0)
+VERSION                              номер текущей версии (5.0)
 CHANGELOG.md                         описание изменений каждой версии
 .github/workflows/build.yml          сборка ISO в GitHub Actions
 ```
