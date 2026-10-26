@@ -50,6 +50,7 @@ htop
 xclip
 gvfs-backends
 tumbler
+pavucontrol
 
 python3-gi
 gir1.2-gtk-3.0
@@ -61,15 +62,31 @@ wine64
 wine-binfmt
 winetricks
 
+gamemode
+mangohud
+mesa-vulkan-drivers
+vulkan-tools
+
 polkitd
 pkexec
 mate-polkit
+gnome-keyring
 xdg-user-dirs
+xdg-desktop-portal
+xdg-desktop-portal-gtk
 
 network-manager
 network-manager-gnome
 thunar-archive-plugin
+blueman
+bluez
+system-config-printer
 
+zram-tools
+plymouth
+plymouth-themes
+
+fonts-inter
 fonts-noto-core
 fonts-noto-color-emoji
 fonts-liberation
@@ -98,4 +115,3 @@ mtools
 locales
 console-setup
 keyboard-configuration
-plymouth

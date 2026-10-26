@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220">
+  <defs>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4ade80"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(320 78)">
+    <rect x="-46" y="-46" width="92" height="92" rx="24" fill="#04120d" stroke="url(#mark)" stroke-width="2.5"/>
+    <path d="M-14 -27h24c13.5 0 22 8 22 20s-8.5 20-22 20h-9.5v19h-14.5z" fill="url(#mark)"/>
+    <circle cx="21" cy="27" r="4" fill="#4ade80"/>
+  </g>
+  <text x="320" y="164" text-anchor="middle" font-family="Inter, Noto Sans, sans-serif"
+        font-size="44" font-weight="700" fill="#ecfdf5" letter-spacing="0.5">ProstOS</text>
+  <text x="320" y="196" text-anchor="middle" font-family="Inter, Noto Sans, sans-serif"
+        font-size="15" font-weight="400" fill="#6ee7b7" letter-spacing="4">ПРОСТО. ОТКРЫТО. ТВОЁ.</text>
+</svg>

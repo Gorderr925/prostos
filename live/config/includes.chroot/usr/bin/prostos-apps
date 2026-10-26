@@ -1,228 +1,386 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""Центр приложений ProstOS.
+"""Центр приложений ProstOS 4.0.
 
-Показывает список полезных программ и ставит выбранные одной кнопкой.
-Ничего не скачивается втихую: пользователь видит список и нажимает сам.
+Карточки с иконками, категории, поиск, очередь установки и прогресс —
+без терминала и без sudo в окне.
+
+Установка:
+  apt      — через pkexec (пароль спрашивает системный агент polkit);
+  flatpak  — в пользовательский профиль (root не нужен);
+  deb      — скачивается и ставится тем же pkexec.
 """
 
-import os
 import shlex
 import subprocess
 import sys
-import tempfile
+import threading
 
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, Gtk  # noqa: E402
+from gi.repository import Gdk, GLib, Gtk, Pango  # noqa: E402
 
-# key, название, описание, тип, пакет
+# key, название, описание, категория, тип, пакет/URL, иконка
 APPS = [
-    ("steam", "Steam", "игры, Proton для Windows-игр", "flatpak",
-     "com.valvesoftware.Steam"),
-    ("telegram", "Telegram", "мессенджер", "flatpak",
-     "org.telegram.desktop"),
-    ("discord", "Discord", "голосовой чат и сообщества", "flatpak",
-     "com.discordapp.Discord"),
-    ("chrome", "Google Chrome", "браузер от Google", "deb",
-     "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"),
-    ("chromium", "Chromium", "открытый браузер без рекламы", "apt", "chromium"),
-    ("gimp", "GIMP", "редактор фото и картинок", "apt", "gimp"),
-    ("obs", "OBS Studio", "запись экрана и стримы", "apt", "obs-studio"),
-    ("krita", "Krita", "рисование и графика", "apt", "krita"),
-    ("qbittorrent", "qBittorrent", "загрузка файлов и торренты", "apt",
-     "qbittorrent"),
-    ("audacity", "Audacity", "запись и обработка звука", "apt", "audacity"),
-    ("thunderbird", "Thunderbird", "почта на компьютере", "apt", "thunderbird"),
-    ("lutris", "Lutris", "помощник для игр Windows", "apt", "lutris"),
-    ("vscode", "Visual Studio Code", "редактор кода", "deb",
-     "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64"),
+    # Интернет
+    ("chrome", "Google Chrome", "быстрый браузер от Google", "Интернет", "deb",
+     "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", "google-chrome"),
+    ("chromium", "Chromium", "открытый браузер без телеметрии", "Интернет", "apt", "chromium", "chromium"),
+    ("telegram", "Telegram", "мессенджер", "Интернет", "flatpak", "org.telegram.desktop", "telegram"),
+    ("discord", "Discord", "голосовой чат и сообщества", "Интернет", "flatpak",
+     "com.discordapp.Discord", "discord"),
+    ("thunderbird", "Thunderbird", "почта на компьютере", "Интернет", "apt", "thunderbird", "thunderbird"),
+    ("qbittorrent", "qBittorrent", "торренты и загрузки", "Интернет", "apt", "qbittorrent", "qbittorrent"),
+
+    # Игры
+    ("steam", "Steam", "игры и Proton для Windows-игр", "Игры", "flatpak",
+     "com.valvesoftware.Steam", "steam"),
+    ("lutris", "Lutris", "помощник для игр Windows", "Игры", "apt", "lutris", "lutris"),
+    ("gamemode", "GameMode", "ускоряет систему в играх", "Игры", "apt", "gamemode", "applications-games"),
+    ("mangohud", "MangoHud", "счётчик FPS поверх игры", "Игры", "apt", "mangohud", "utilities-system-monitor"),
+
+    # Творчество
+    ("gimp", "GIMP", "редактор фото и картинок", "Творчество", "apt", "gimp", "gimp"),
+    ("krita", "Krita", "рисование и графика", "Творчество", "apt", "krita", "krita"),
+    ("obs", "OBS Studio", "запись экрана и стримы", "Творчество", "apt", "obs-studio", "obs"),
+    ("audacity", "Audacity", "запись и обработка звука", "Творчество", "apt", "audacity", "audacity"),
+    ("inkscape", "Inkscape", "векторная графика", "Творчество", "apt", "inkscape", "inkscape"),
+
+    # Работа
+    ("vscode", "Visual Studio Code", "редактор кода", "Работа", "deb",
+     "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64", "code"),
+    ("timeshift", "Timeshift", "резервные копии системы", "Система", "apt", "timeshift", "timeshift"),
+    ("gparted", "GParted", "разметка дисков", "Система", "apt", "gparted", "gparted"),
+    ("synaptic", "Synaptic", "менеджер пакетов", "Система", "apt", "synaptic", "synaptic"),
+    ("flatseal", "Flatseal", "права приложений Flatpak", "Система", "flatpak",
+     "com.github.tchx84.Flatseal", "flatseal"),
 ]
 
+CATEGORIES = ["Все", "Интернет", "Игры", "Творчество", "Работа", "Система"]
+
 CSS = b"""
-window { background-color: #07211a; }
-.head { font-size: 24px; font-weight: bold; color: #ecfdf5; }
-.sub { font-size: 14px; color: #6ee7b7; }
-.name { font-size: 15px; font-weight: bold; color: #ecfdf5; }
-.desc { font-size: 13px; color: #a7f3d0; }
-button { font-size: 15px; padding: 8px 18px; }
+window { background-color: #0b1a15; }
+.header { background-image: linear-gradient(to bottom, #143a2b, #0e2a20);
+          border-bottom: 1px solid #1f4636; }
+.title { font-size: 22px; font-weight: 700; color: #ecfdf5; }
+.subtitle { font-size: 13px; color: #9fb8ac; }
+.sidebar { background-color: #08150f; border-right: 1px solid #1f4636; }
+.sidebar row { padding: 10px 16px; border-radius: 10px; margin: 2px 8px; color: #cfe9dc; }
+.sidebar row:selected { background-color: rgba(34, 197, 94, 0.18); color: #ecfdf5; }
+.card { background-color: #10241d; border: 1px solid #1f4636; border-radius: 14px; }
+.card:hover { border-color: #2b5f4a; }
+.card-name { font-size: 15px; font-weight: 700; color: #ecfdf5; }
+.card-desc { font-size: 12px; color: #9fb8ac; }
+.badge { font-size: 11px; color: #6ee7b7; }
+.status { background-color: #08150f; border-top: 1px solid #1f4636; color: #cfe9dc; }
+.logview { background-color: #06110c; color: #9fdcbf; font-family: monospace; font-size: 11px; }
 """
 
 
-def build_script(selected):
-    lines = [
-        "#!/bin/bash",
-        "set -u",
-        'echo "=== Установка приложений ProstOS ==="',
-        'echo "Пароль администратора нужен один раз — для установки."',
-        "echo",
-        "sudo apt-get update",
-    ]
-    apt = []
-    flat = []
-    debs = []
-    for _name, _key, kind, pkg in selected:
-        if kind == "apt":
-            apt.append(pkg)
-        elif kind == "flatpak":
-            flat.append(pkg)
-        elif kind == "deb":
-            debs.append(pkg)
+def run_quiet(cmd):
+    """Вернуть (код, вывод) без исключений."""
+    try:
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           text=True, timeout=25)
+        return p.returncode, p.stdout
+    except (OSError, subprocess.SubprocessError):
+        return 1, ""
 
-    if apt:
-        lines.append("sudo apt-get install -y " + " ".join(apt))
-    if flat:
-        lines.append(
-            "flatpak remote-add --user --if-not-exists flathub "
-            "https://flathub.org/repo/flathub.flatpakrepo"
-        )
-    for pkg in flat:
-        lines.append(f"flatpak install --user -y flathub {shlex.quote(pkg)}")
-    for url in debs:
-        lines.append(
-            "tmpdeb=$(mktemp /tmp/prostos-app-XXXXXX.deb) && "
-            f"curl -L --fail -o \"$tmpdeb\" {shlex.quote(url)} && "
-            "sudo apt-get install -y \"$tmpdeb\"; rm -f \"$tmpdeb\""
-        )
 
-    lines += [
-        "echo",
-        'echo "=== Готово! Программы появятся в меню ProstOS ==="',
-        'read -r -p "Нажмите Enter, чтобы закрыть окно..." _',
-    ]
-    return "\n".join(lines) + "\n"
+def is_installed(app):
+    _k, _n, _d, _c, kind, pkg, _i = app
+    if kind == "apt":
+        code, out = run_quiet(["dpkg-query", "-W", "-f=${Status}", pkg])
+        return code == 0 and "install ok installed" in out
+    if kind == "flatpak":
+        code, out = run_quiet(["flatpak", "list", "--app", "--columns=application"])
+        return code == 0 and pkg in out
+    return False
+
+
+def pk(cmd):
+    """Выполнить команду от root через polkit."""
+    return ["pkexec", "sh", "-c", cmd]
+
+
+def commands_for(app):
+    _k, _n, _d, _c, kind, pkg, _i = app
+    if kind == "apt":
+        return [pk("DEBIAN_FRONTEND=noninteractive apt-get install -y " + shlex.quote(pkg))]
+    if kind == "flatpak":
+        return [
+            ["flatpak", "remote-add", "--user", "--if-not-exists", "flathub",
+             "https://flathub.org/repo/flathub.flatpakrepo"],
+            ["flatpak", "install", "--user", "-y", "flathub", pkg],
+        ]
+    if kind == "deb":
+        return [pk(
+            "set -e; tmp=$(mktemp /tmp/prostos-XXXXXX.deb); "
+            "curl -L --fail -o \"$tmp\" " + shlex.quote(pkg) + "; "
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y \"$tmp\"; rm -f \"$tmp\""
+        )]
+    return []
 
 
 class AppCenter(Gtk.Window):
     def __init__(self, first_run=False):
-        title = "Центр приложений ProstOS"
-        super().__init__(title=title)
-        self.set_default_size(760, 640)
+        super().__init__(title="Центр приложений ProstOS")
+        self.set_default_size(1060, 700)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.connect("destroy", Gtk.main_quit)
         self.first_run = first_run
-        self.checks = {}
+        self.cards = {}
+        self.installed = {}
+        self.busy = False
 
-        provider = Gtk.CssProvider()
-        provider.load_from_data(CSS)
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        self._load_css()
 
-        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        outer.set_border_width(18)
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(outer)
 
-        head = Gtk.Label(label="Что поставим?" if first_run else "Центр приложений")
-        head.set_halign(Gtk.Align.START)
-        head.get_style_context().add_class("head")
+        head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        head.get_style_context().add_class("header")
+        head.set_border_width(18)
         outer.pack_start(head, False, False, 0)
 
-        sub_text = (
-            "Отметьте нужное — ProstOS установит всё сам. "
-            "Можно вернуться сюда в любой момент: меню → Центр приложений."
-            if first_run
-            else "Отметьте программы и нажмите «Установить выбранные»."
-        )
-        sub = Gtk.Label(label=sub_text)
-        sub.set_halign(Gtk.Align.START)
-        sub.set_line_wrap(True)
-        sub.get_style_context().add_class("sub")
-        outer.pack_start(sub, False, False, 0)
+        titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        t1 = Gtk.Label(label="Центр приложений")
+        t1.get_style_context().add_class("title")
+        t1.set_halign(Gtk.Align.START)
+        t2 = Gtk.Label(label="Ставьте что нужно — ProstOS сделает всё сам")
+        t2.get_style_context().add_class("subtitle")
+        t2.set_halign(Gtk.Align.START)
+        titles.pack_start(t1, False, False, 0)
+        titles.pack_start(t2, False, False, 0)
+        head.pack_start(titles, False, False, 0)
+
+        self.search = Gtk.SearchEntry()
+        self.search.set_placeholder_text("Поиск программ")
+        self.search.set_size_request(280, -1)
+        self.search.connect("search-changed", lambda *_: self.apply_filter())
+        head.pack_end(self.search, False, False, 0)
+
+        body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        outer.pack_start(body, True, True, 0)
+
+        side = Gtk.ListBox()
+        side.get_style_context().add_class("sidebar")
+        side.set_size_request(190, -1)
+        side.connect("row-selected", lambda *_: self.apply_filter())
+        for cat in CATEGORIES:
+            side.add(Gtk.ListBoxRow(child=self._cat_label(cat)))
+        side.select_row(side.get_row_at_index(0))
+        self.side = side
+        body.pack_start(side, False, False, 0)
 
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scroll.set_shadow_type(Gtk.ShadowType.IN)
-        outer.pack_start(scroll, True, True, 6)
+        body.pack_start(scroll, True, True, 0)
 
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        box.set_margin_start(8)
-        box.set_margin_end(8)
-        box.set_margin_top(8)
-        box.set_margin_bottom(8)
-        scroll.add(box)
+        self.flow = Gtk.FlowBox()
+        self.flow.set_valign(Gtk.Align.START)
+        self.flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.flow.set_homogeneous(True)
+        self.flow.set_max_children_per_line(3)
+        self.flow.set_min_children_per_line(2)
+        self.flow.set_row_spacing(12)
+        self.flow.set_column_spacing(12)
+        self.flow.set_margin_top(16)
+        self.flow.set_margin_bottom(16)
+        self.flow.set_margin_start(16)
+        self.flow.set_margin_end(16)
+        scroll.add(self.flow)
 
-        for key, name, desc, kind, pkg in APPS:
-            cb = Gtk.CheckButton()
-            cb.set_margin_top(4)
-            cb.set_margin_bottom(4)
-            row = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
-            title_lbl = Gtk.Label()
-            title_lbl.set_markup(f"<b>{name}</b>")
-            title_lbl.set_halign(Gtk.Align.START)
-            title_lbl.get_style_context().add_class("name")
-            desc_lbl = Gtk.Label(label=desc)
-            desc_lbl.set_halign(Gtk.Align.START)
-            desc_lbl.get_style_context().add_class("desc")
-            row.pack_start(title_lbl, False, False, 0)
-            row.pack_start(desc_lbl, False, False, 0)
-            cb.add(row)
-            box.pack_start(cb, False, False, 0)
-            self.checks[key] = (cb, (name, key, kind, pkg))
+        status = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        status.get_style_context().add_class("status")
+        status.set_border_width(10)
+        outer.pack_start(status, False, False, 0)
 
-        bottom = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        outer.pack_start(bottom, False, False, 4)
+        self.progress = Gtk.ProgressBar()
+        self.progress.set_show_text(True)
+        self.progress.set_text("Готово")
+        status.pack_start(self.progress, False, False, 0)
 
-        self.status = Gtk.Label(label="")
-        self.status.set_halign(Gtk.Align.START)
-        bottom.pack_start(self.status, True, True, 0)
+        self.log_view = Gtk.TextView()
+        self.log_view.set_editable(False)
+        self.log_view.set_monospace(True)
+        self.log_view.get_style_context().add_class("logview")
+        log_scroll = Gtk.ScrolledWindow()
+        log_scroll.set_min_content_height(90)
+        log_scroll.add(self.log_view)
+        self.log_expander = Gtk.Expander(label="Подробности")
+        self.log_expander.add(log_scroll)
+        status.pack_start(self.log_expander, False, False, 0)
 
-        close_btn = Gtk.Button(label="Закрыть")
-        close_btn.connect("clicked", lambda *_: Gtk.main_quit())
-        bottom.pack_end(close_btn, False, False, 0)
+        for app in APPS:
+            self.cards[app[0]] = self._make_card(app)
+        for card in self.cards.values():
+            self.flow.add(card)
+        self.flow.show_all()
 
-        install_btn = Gtk.Button(label="Установить выбранные")
-        install_btn.get_style_context().add_class("suggested-action")
-        install_btn.connect("clicked", self.on_install)
-        bottom.pack_end(install_btn, False, False, 0)
-
+        GLib.idle_add(self.detect_installed)
         self.show_all()
 
-    def on_install(self, _widget):
-        selected = [meta for cb, meta in self.checks.values() if cb.get_active()]
-        if not selected:
-            self.status.set_text("Ничего не выбрано")
+    def _load_css(self):
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+    @staticmethod
+    def _cat_label(text):
+        lbl = Gtk.Label(label=text)
+        lbl.set_halign(Gtk.Align.START)
+        return lbl
+
+    def _make_card(self, app):
+        key, name, desc, cat, kind, pkg, icon = app
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        card.get_style_context().add_class("card")
+        card.set_border_width(14)
+        card.set_size_request(280, 150)
+
+        top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.DIALOG)
+        try:
+            img.set_pixel_size(42)
+        except AttributeError:
+            pass
+        img.set_valign(Gtk.Align.START)
+        top.pack_start(img, False, False, 0)
+
+        names = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        n = Gtk.Label(label=name)
+        n.get_style_context().add_class("card-name")
+        n.set_halign(Gtk.Align.START)
+        n.set_ellipsize(Pango.EllipsizeMode.END)
+        d = Gtk.Label(label=desc)
+        d.get_style_context().add_class("card-desc")
+        d.set_halign(Gtk.Align.START)
+        d.set_line_wrap(True)
+        d.set_max_width_chars(30)
+        names.pack_start(n, False, False, 0)
+        names.pack_start(d, False, False, 0)
+        top.pack_start(names, True, True, 0)
+        card.pack_start(top, True, False, 0)
+
+        bad = Gtk.Label(label="")
+        bad.get_style_context().add_class("badge")
+        bad.set_halign(Gtk.Align.START)
+        card.pack_start(bad, False, False, 0)
+
+        btn = Gtk.Button(label="Установить")
+        btn.get_style_context().add_class("suggested-action")
+        btn.connect("clicked", self.on_install_one, app, btn)
+        card.pack_end(btn, False, False, 0)
+
+        card.app = app
+        card.button = btn
+        card.badge = bad
+        card.show_all()
+        return card
+
+    def selected_category(self):
+        row = self.side.get_selected_row()
+        if not row:
+            return "Все"
+        return row.get_child().get_text()
+
+    def apply_filter(self):
+        cat = self.selected_category()
+        needle = self.search.get_text().strip().lower()
+        for card in self.cards.values():
+            _k, name, desc, c, _kind, _pkg, _i = card.app
+            ok_cat = (cat == "Все" or c == cat)
+            ok_txt = (not needle or needle in name.lower() or needle in desc.lower())
+            card.set_visible(ok_cat and ok_txt)
+
+    def detect_installed(self):
+        for card in self.cards.values():
+            if is_installed(card.app):
+                self.installed[card.app[0]] = True
+                card.badge.set_text("✓ установлено")
+                card.button.set_label("Удалить")
+                card.button.get_style_context().remove_class("suggested-action")
+        return False
+
+    def log(self, text):
+        buf = self.log_view.get_buffer()
+        buf.insert(buf.get_end_iter(), text + "\n")
+        self.log_view.scroll_to_iter(buf.get_end_iter(), 0.0, False, 0.0, 0.0)
+
+    def ui(self, fn, *args):
+        GLib.idle_add(fn, *args)
+
+    def set_busy(self, busy, text=""):
+        self.busy = busy
+        if busy:
+            self.progress.set_text(text)
+            self.progress.pulse()
+        else:
+            self.progress.set_text("Готово")
+            self.progress.set_fraction(0.0)
+
+    def on_install_one(self, _btn, app, button):
+        if self.busy:
             return
+        if self.installed.get(app[0]):
+            self.log("Удаление пока не поддерживается: " + app[1])
+            return
+        button.set_sensitive(False)
+        threading.Thread(target=self.worker, args=([app],), daemon=True).start()
 
-        script = build_script(selected)
-        path = os.path.join(tempfile.gettempdir(), "prostos-apps-install.sh")
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(script)
-        os.chmod(path, 0o755)
+    def worker(self, apps):
+        self.ui(self.set_busy, True, "Установка…")
+        for i, app in enumerate(apps, 1):
+            name = app[1]
+            self.ui(self.log, "\n=== %s (%d/%d) ===" % (name, i, len(apps)))
+            ok = True
+            for cmd in commands_for(app):
+                self.ui(self.progress.set_text, "Ставлю: " + name)
+                if self.run_cmd(cmd) != 0:
+                    ok = False
+                    self.ui(self.log, "Ошибка на: " + name)
+                    break
+            if ok:
+                self.installed[app[0]] = True
+                self.ui(self.mark_installed, app[0])
+            else:
+                self.ui(self.mark_failed, app[0])
+        self.ui(self.set_busy, False)
 
-        subprocess.Popen(
-            [
-                "xfce4-terminal",
-                "--title=Установка приложений ProstOS",
-                "--geometry=100x30",
-                "-e",
-                f"bash {path}",
-            ]
-        )
-        self.status.set_text(
-            f"Выбрано: {len(selected)}. Установка идёт в открывшемся окне."
-        )
-        if self.first_run:
-            mark_offered()
+    def run_cmd(self, cmd):
+        try:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT, text=True)
+            for line in p.stdout:
+                line = line.rstrip()
+                if line:
+                    self.ui(self.log, line)
+            return p.wait()
+        except OSError as exc:
+            self.ui(self.log, "Не удалось запустить: %s" % exc)
+            return 1
 
+    def mark_installed(self, key):
+        card = self.cards[key]
+        card.badge.set_text("✓ установлено")
+        card.button.set_label("Удалить")
+        card.button.get_style_context().remove_class("suggested-action")
+        card.button.set_sensitive(True)
 
-def mark_offered():
-    path = os.path.expanduser("~/.config/prostos/apps-offered")
-    try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write("1\n")
-    except OSError:
-        pass
+    def mark_failed(self, key):
+        card = self.cards[key]
+        card.badge.set_text("не удалось — см. подробности")
+        card.button.set_sensitive(True)
 
 
 def main():
     first_run = "--first-run" in sys.argv
-    window = AppCenter(first_run=first_run)
-    window.show_all()
+    win = AppCenter(first_run=first_run)
+    win.show_all()
     Gtk.main()
     return 0
 

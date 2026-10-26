@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=ProstOS
+Comment=Тёмная фирменная тема ProstOS
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=ProstOS
+MetacityTheme=Arc-Dark
+IconTheme=Papirus-Dark
+CursorTheme=Adwaita
+ButtonLayout=menu:minimize,maximize,close

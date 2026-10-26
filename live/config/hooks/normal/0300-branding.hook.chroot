@@ -1,0 +1,50 @@
+#!/bin/sh
+# ProstOS 4.0 — фирменное оформление: Plymouth, zram, права на тему.
+set -eu
+
+export DEBIAN_FRONTEND=noninteractive
+
+# --- Plymouth: рисуем PNG из SVG и включаем свою тему ---
+THEME=/usr/share/plymouth/themes/prostos
+if [ -d "$THEME" ]; then
+	if command -v rsvg-convert >/dev/null 2>&1; then
+		[ -f "$THEME/splash.svg" ] && rsvg-convert -w 640 -h 220 "$THEME/splash.svg" -o "$THEME/splash.png" || true
+		[ -f "$THEME/dot.svg" ] && rsvg-convert -w 10 -h 10 "$THEME/dot.svg" -o "$THEME/dot.png" || true
+	fi
+	chmod 644 "$THEME"/* 2>/dev/null || true
+	if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+		plymouth-set-default-theme prostos 2>/dev/null || true
+	fi
+	# пересобрать initramfs с новой темой
+	update-initramfs -u -k all >/dev/null 2>&1 || true
+fi
+
+# --- zram: сжатая оперативная память (быстрее и бережнее к SSD) ---
+if [ -d /etc/default ]; then
+	cat > /etc/default/zramswap <<'EOF'
+# ProstOS: zram вместо swap-раздела
+ALGO=zstd
+PERCENT=25
+PRIORITY=100
+EOF
+fi
+systemctl enable zramswap.service 2>/dev/null || true
+
+# --- Права на тему и иконки ---
+if [ -d /usr/share/themes/ProstOS ]; then
+	find /usr/share/themes/ProstOS -type f -exec chmod 644 {} + 2>/dev/null || true
+	find /usr/share/themes/ProstOS -type d -exec chmod 755 {} + 2>/dev/null || true
+fi
+
+# --- Однократные задачи после установки: обновить кэши ---
+update-mime-database /usr/share/mime 2>/dev/null || true
+update-desktop-database /usr/share/applications 2>/dev/null || true
+gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+gtk-update-icon-cache -f -t /usr/share/icons/Papirus-Dark 2>/dev/null || true
+
+# --- Обновлятор и центр приложений должны быть исполняемыми ---
+for f in /usr/bin/prostos-apps /usr/bin/prostos-update /usr/bin/prostos-welcome; do
+	[ -f "$f" ] && chmod 755 "$f" || true
+done
+
+exit 0

@@ -1,0 +1,36 @@
+#!/bin/sh
+# ProstOS 4.0 — обновление системы в пару кликов.
+# Обновляет пакеты Debian, приложения Flatpak и показывает итог.
+set -u
+
+if ! command -v zenity >/dev/null 2>&1; then
+	exec xfce4-terminal -e "sudo apt-get update && sudo apt-get -y upgrade; read -r _"
+fi
+
+(
+	echo "10"; echo "# Проверяю обновления Debian…"
+	pkexec sh -c 'DEBIAN_FRONTEND=noninteractive apt-get update' >/tmp/prostos-update.log 2>&1
+
+	echo "35"; echo "# Обновляю пакеты Debian…"
+	pkexec sh -c 'DEBIAN_FRONTEND=noninteractive apt-get -y upgrade' >>/tmp/prostos-update.log 2>&1
+
+	echo "70"; echo "# Обновляю Flatpak…"
+	flatpak update --user -y >>/tmp/prostos-update.log 2>&1 || true
+
+	echo "95"; echo "# Убираю лишнее…"
+	pkexec sh -c 'DEBIAN_FRONTEND=noninteractive apt-get -y autoremove' >>/tmp/prostos-update.log 2>&1 || true
+
+	echo "100"
+) | zenity --progress --title="Обновление ProstOS" \
+	--text="Проверяю обновления…" --percentage=0 --auto-close --width=460 2>/dev/null
+
+if grep -qE '^(E:|Err:)' /tmp/prostos-update.log 2>/dev/null; then
+	zenity --text-info --title="Обновление: были ошибки" \
+		--filename=/tmp/prostos-update.log --width=760 --height=460 2>/dev/null
+else
+	zenity --info --title="ProstOS обновлён" \
+		--text="Все обновления установлены.\n\nПерезагрузка обычно не нужна,\nно после крупных обновлений ядра — желательна." \
+		--width=380 2>/dev/null
+fi
+
+exit 0

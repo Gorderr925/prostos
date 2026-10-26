@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=ProstOS
+Description=Фирменный экран загрузки ProstOS
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/prostos
+ScriptFile=/usr/share/plymouth/themes/prostos/prostos.script

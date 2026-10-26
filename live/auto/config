@@ -10,7 +10,7 @@ lb config noauto \
 	--debian-installer none \
 	--debconf-frontend noninteractive \
 	--debconf-priority critical \
-	--bootappend-live "boot=live components quiet locales=ru_RU.UTF-8 keyboard-layouts=ru,us keyboard-options=grp:alt_shift_toggle timezone=Europe/Moscow username=prost hostname=prostos persistence" \
+	--bootappend-live "boot=live components quiet splash locales=ru_RU.UTF-8 keyboard-layouts=ru,us keyboard-options=grp:alt_shift_toggle timezone=Europe/Moscow username=prost hostname=prostos persistence" \
 	--bootloaders "syslinux,grub-efi" \
 	--iso-application "ProstOS" \
 	--iso-preparer "ProstOS Project" \
@@ -20,6 +20,6 @@ lb config noauto \
 	--memtest none \
 	--apt-indices false \
 	--checksums sha256 \
-	--compression xz \
-	--chroot-squashfs-compression-type xz \
+	--compression zstd \
+	--chroot-squashfs-compression-type zstd \
 	--firmware-chroot true

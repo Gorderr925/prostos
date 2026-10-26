@@ -1,0 +1,226 @@
+/* ProstOS 4.0 — фирменная тема GTK3.
+   База: Adwaita (тёмная), сверху — палитра и геометрия ProstOS. */
+
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+
+@define-color prostos_bg          #0b1a15;
+@define-color prostos_bg_alt      #0f241d;
+@define-color prostos_surface     #123326;
+@define-color prostos_line        #1f4636;
+@define-color prostos_text        #e7f5ee;
+@define-color prostos_muted       #9fb8ac;
+@define-color prostos_accent      #22c55e;
+@define-color prostos_accent_dark #16a34a;
+@define-color prostos_on_accent   #04120d;
+
+* {
+  -GtkWidget-focus-line-width: 0;
+  -GtkWidget-focus-padding: 0;
+}
+
+window,
+.background {
+  background-color: @prostos_bg;
+  color: @prostos_text;
+}
+
+headerbar,
+.titlebar {
+  background-image: linear-gradient(to bottom, #143a2b, #0e2a20);
+  border-bottom: 1px solid @prostos_line;
+  box-shadow: none;
+  color: @prostos_text;
+  min-height: 46px;
+}
+
+headerbar button,
+.titlebar button {
+  background-image: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  color: @prostos_text;
+}
+
+headerbar button:hover,
+.titlebar button:hover {
+  background-color: alpha(#4ade80, 0.14);
+  border-color: alpha(#4ade80, 0.25);
+}
+
+button {
+  background-image: none;
+  background-color: #16302a;
+  border: 1px solid @prostos_line;
+  border-radius: 10px;
+  box-shadow: none;
+  color: @prostos_text;
+  padding: 6px 14px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+button:hover {
+  background-color: #1c4436;
+  border-color: #2b5f4a;
+}
+
+button:active,
+button:checked {
+  background-image: none;
+  background-color: @prostos_accent;
+  border-color: @prostos_accent_dark;
+  color: @prostos_on_accent;
+}
+
+button.suggested-action {
+  background-image: none;
+  background-color: @prostos_accent;
+  border-color: @prostos_accent_dark;
+  color: @prostos_on_accent;
+  font-weight: 600;
+}
+
+button.suggested-action:hover {
+  background-color: #4ade80;
+}
+
+button.destructive-action {
+  background-image: none;
+  background-color: #b91c1c;
+  border-color: #7f1d1d;
+  color: #fff;
+}
+
+entry,
+spinbutton {
+  background-image: none;
+  background-color: @prostos_bg_alt;
+  border: 1px solid @prostos_line;
+  border-radius: 10px;
+  color: @prostos_text;
+  padding: 6px 10px;
+}
+
+entry:focus {
+  border-color: @prostos_accent;
+  box-shadow: 0 0 0 2px alpha(@prostos_accent, 0.25);
+}
+
+menu,
+.menu,
+popover,
+popover.background {
+  background-color: #0f241d;
+  border: 1px solid @prostos_line;
+  border-radius: 12px;
+  color: @prostos_text;
+}
+
+menuitem:hover {
+  background-color: alpha(@prostos_accent, 0.18);
+}
+
+treeview.view,
+list,
+listbox,
+.view {
+  background-color: @prostos_bg;
+  color: @prostos_text;
+}
+
+treeview.view:selected,
+list row:selected,
+.view:selected {
+  background-color: alpha(@prostos_accent, 0.30);
+  color: @prostos_text;
+}
+
+treeview.view header button {
+  background-image: none;
+  background-color: @prostos_surface;
+  border-radius: 0;
+  border-color: @prostos_line;
+}
+
+scrollbar slider {
+  background-color: #2b5f4a;
+  border-radius: 8px;
+  min-width: 8px;
+  min-height: 8px;
+}
+
+scrollbar slider:hover {
+  background-color: @prostos_accent;
+}
+
+scrollbar trough {
+  background-color: #0a1712;
+}
+
+notebook > header {
+  background-color: #0e2a20;
+  border-color: @prostos_line;
+}
+
+notebook > header tab {
+  border-radius: 8px 8px 0 0;
+  color: @prostos_muted;
+  padding: 6px 14px;
+}
+
+notebook > header tab:checked {
+  background-color: @prostos_bg;
+  color: @prostos_text;
+}
+
+progressbar trough {
+  background-color: @prostos_bg_alt;
+  border-radius: 8px;
+  min-height: 8px;
+}
+
+progressbar progress {
+  background-image: linear-gradient(to right, @prostos_accent_dark, @prostos_accent);
+  border-radius: 8px;
+  min-height: 8px;
+}
+
+switch {
+  background-color: #16302a;
+  border: 1px solid @prostos_line;
+  border-radius: 14px;
+}
+
+switch:checked {
+  background-color: @prostos_accent_dark;
+}
+
+tooltip {
+  background-color: #0f241d;
+  border: 1px solid @prostos_line;
+  border-radius: 8px;
+  color: @prostos_text;
+}
+
+separator {
+  background-color: @prostos_line;
+}
+
+checkbutton check,
+radiobutton radio {
+  background-color: @prostos_bg_alt;
+  border: 1px solid @prostos_line;
+  border-radius: 5px;
+}
+
+checkbutton check:checked,
+radiobutton radio:checked {
+  background-color: @prostos_accent;
+  border-color: @prostos_accent_dark;
+  color: @prostos_on_accent;
+}
+
+scrolledwindow undershoot.top,
+scrolledwindow undershoot.bottom {
+  background: none;
+}
