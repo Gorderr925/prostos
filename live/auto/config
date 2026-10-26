@@ -20,6 +20,6 @@ lb config noauto \
 	--memtest none \
 	--apt-indices false \
 	--checksums sha256 \
-	--compression zstd \
+	--compression xz \
 	--chroot-squashfs-compression-type zstd \
 	--firmware-chroot true
